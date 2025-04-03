@@ -122,7 +122,7 @@ function Register() {
           <div className="text-center">
             <p>
               มีบัญชีอยู่แล้ว?{' '}
-              <Link to="/login" className="text-blue-600 hover:text-blue-500">
+              <Link to="/" className="text-blue-600 hover:text-blue-500">
                 เข้าสู่ระบบ
               </Link>
             </p>
