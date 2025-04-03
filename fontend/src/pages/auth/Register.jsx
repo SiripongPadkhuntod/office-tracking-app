@@ -36,7 +36,7 @@ function Register() {
     try {
       const { confirmPassword, ...userData } = formData;
       await register(userData);
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       setErrorMessage(error.response?.data?.message || 'การลงทะเบียนล้มเหลว โปรดลองอีกครั้ง');
     }

@@ -176,6 +176,7 @@ function EditEquipment() {
             <option value="Active">Active</option>
             <option value="In Repair">In Repair</option>
             <option value="Inactive">Inactive</option>
+            <option value="Disposed">Disposed</option>
           </select>
         </div>
         

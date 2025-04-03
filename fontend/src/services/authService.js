@@ -14,6 +14,16 @@ const authService = {
   
   // Get user profile
   getProfile: () => {
+    // api.get('/auth/profile')
+    //   .then((response) => {
+    //     return response.data.data;
+    //   })
+    //   .catch((error) => {
+    //     console.error('Error fetching profile:', error);
+    //     throw error;
+    //   });
+
+
     return api.get('/auth/profile');
   }
 };
