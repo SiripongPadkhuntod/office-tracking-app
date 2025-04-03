@@ -14,7 +14,7 @@ export const getAllUsers = async (req, res) => {
 export const getUserByName = async (req, res) => {
   const { name } = req.params;
   try {
-    const [rows] = await db.execute("SELECT * FROM users WHERE name LIKE ?", [`%${name}%`]);
+    const [rows] = await db.execute("SELECT * FROM users WHERE LOWER(name) LIKE LOWER(?)", [`%${name}%`]);
     res.status(200).json(rows);
   } catch (error) {
     res.status(500).json({ message: error.message });

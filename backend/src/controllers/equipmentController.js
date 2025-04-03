@@ -37,7 +37,7 @@ export const searchEquipment = async (req, res) => {
         params.push(type);
     }
     if (searchType === "code" && searchTerm) {
-        query += " AND LOWER(id) = LIKE ?";
+        query += " AND LOWER(id) LIKE ?";
         params.push(searchTerm.toLowerCase());
     }
     else if (searchType === "name" && searchTerm) {

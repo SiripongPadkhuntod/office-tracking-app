@@ -34,6 +34,13 @@ function Register() {
       return;
     }
     
+    // Validate password strength (minimum 6 characters, at least one uppercase letter, one lowercase letter, and one digit)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      setErrorMessage('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร และต้องประกอบด้วยตัวอักษรเล็ก ตัวอักษรใหญ่ และตัวเลข');
+      return;
+    }
+    
     try {
       const { confirmPassword, ...userData } = formData;
       await register(userData);
