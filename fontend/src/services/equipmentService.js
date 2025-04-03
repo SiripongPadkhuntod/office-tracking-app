@@ -16,7 +16,7 @@ const equipmentService = {
   searchEquipment: (query) => {
     const params = new URLSearchParams();
 
-    // if (query.searchType && query.searchTerm != "" ) params.append("searchType", query.searchType);
+    if (query.searchType ) params.append("searchType", query.searchType);
     if (query.searchTerm) params.append("searchTerm", query.searchTerm);
     if (query.type) params.append("type", query.type);
 

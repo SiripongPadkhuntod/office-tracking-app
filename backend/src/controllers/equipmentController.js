@@ -18,7 +18,7 @@ const logAction = async (action_type, equipment_id, user_id, details) => {
 export const getAllEquipment = async (req, res) => {
     try {
         const [rows] = await db.execute("SELECT * FROM equipment");
-        res.status(200).json({ status: 200, length:rows.length, data: rows });
+        res.status(200).json({ status: 200, length: rows.length, data: rows });
     } catch (error) {
         res.status(200).json({ status: 500, message: error.message });
     }
@@ -27,40 +27,32 @@ export const getAllEquipment = async (req, res) => {
 
 // GET /api/equipment/search
 export const searchEquipment = async (req, res) => {
-    const { type, id, startDate, endDate, searchType, searchTerm } = req.query;
+    try {
+        const { type, startDate, endDate, searchType, searchTerm } = req.query;
     let query = "SELECT * FROM equipment WHERE 1";
     const params = [];
 
     if (type) {
-        query += " AND type = ?";
+        query += " AND LOWER(type) = LOWER(?)";
         params.push(type);
     }
-
-    if (id) {
-        query += " AND code = ?";
-        params.push(id);
+    if (searchType === "code" && searchTerm) {
+        query += " AND LOWER(id) = ?";
+        params.push(searchTerm.toLowerCase());
     }
-
-    if (searchType === "name" && searchTerm) {
+    else if (searchType === "name" && searchTerm) {
         query += " AND LOWER(name) LIKE LOWER(?)";
         params.push(`%${searchTerm.toLowerCase()}%`);
     }
-
     // Convert startDate to YYYY-MM-DD
     let formattedStartDate = null;
     let formattedEndDate = null;
 
     if (startDate) {
-        // const [day, month, year] = startDate.split('-');
-        // formattedStartDate = `${year}-${month}-${day}`;
-        console.log("startDate", startDate);
-        // formattedStartDate = startDate.split('-').reverse().join('-');
         formattedStartDate = startDate;
     }
 
     if (endDate) {
-        // const [day, month, year] = endDate.split('-');
-        // formattedEndDate = `${year}-${month}-${day}`;
         formattedEndDate = endDate;
     }
 
@@ -75,7 +67,9 @@ export const searchEquipment = async (req, res) => {
         params.push(formattedEndDate);
     }
 
-    try {
+    // console.log("query", query);
+
+
         const [rows] = await db.execute(query, params);
         res.status(200).json({ status: 200, length: rows.length, data: rows });
     } catch (error) {
@@ -130,7 +124,7 @@ export const updateEquipment = async (req, res) => {
         // Log the update action
         await logAction('update', id, user_id, `Updated equipment: ${name}`);
 
-        res.status(200).json({ status: 200, equipment_id:id, message: "Equipment updated successfully" });
+        res.status(200).json({ status: 200, equipment_id: id, message: "Equipment updated successfully" });
     } catch (error) {
         res.status(200).json({ status: 500, message: error.message });
     }

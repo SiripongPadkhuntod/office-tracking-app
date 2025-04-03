@@ -37,7 +37,7 @@ function EquipmentList() {
         if (response.data?.status === 401) {
           setMessage({ text: 'กรุณาเข้าสู่ระบบใหม่', type: 'error' });
           localStorage.removeItem('token');
-          window.location.href = '/login';
+          window.location.href = '/';
         }
       }
     } catch (error) {
@@ -49,7 +49,7 @@ function EquipmentList() {
       if (error.response?.status === 401) {
         setMessage({ text: 'กรุณาเข้าสู่ระบบใหม่', type: 'error' });
         localStorage.removeItem('token');
-        window.location.href = '/login';
+        window.location.href = '/';
       }
     } finally {
       setLoading(false);
