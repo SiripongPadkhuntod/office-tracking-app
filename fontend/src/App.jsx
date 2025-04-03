@@ -24,7 +24,7 @@ function App() {
           
           {/* Protected routes - require authentication */}
           <Route element={<Layout />}>
-            <Route path="/home" element={
+            <Route path="/equipment" element={
               <ProtectedRoute>
                 <EquipmentList />
               </ProtectedRoute>
