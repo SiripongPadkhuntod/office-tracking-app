@@ -27,54 +27,63 @@ export const getAllEquipment = async (req, res) => {
 
 // GET /api/equipment/search
 export const searchEquipment = async (req, res) => {
-    const { type, id, name, purchase_date, created_at } = req.query;
+    const { type, id, startDate, endDate, searchType, searchTerm } = req.query;
     let query = "SELECT * FROM equipment WHERE 1";
     const params = [];
 
-    // Filter by 'type'
     if (type) {
-        query += " AND type = ?"; 
+        query += " AND type = ?";
         params.push(type);
     }
 
-    // Filter by 'id'
     if (id) {
-        query += " AND id = ?";
+        query += " AND code = ?";
         params.push(id);
     }
 
-    // Filter by 'name' (case-insensitive)
-    if (name) {
-        query += " AND LOWER(name) LIKE LOWER(?)"; 
-        params.push(`%${name.toLowerCase()}%`);
+    if (searchType === "name" && searchTerm) {
+        query += " AND LOWER(name) LIKE LOWER(?)";
+        params.push(`%${searchTerm.toLowerCase()}%`);
     }
 
-    // Filter by 'purchase_date' in 'DD/MM/YYYY' format
-    if (purchase_date) {
-        // Convert the 'purchase_date' from 'DD/MM/YYYY' to 'YYYY-MM-DD' format
-        const [day, month, year] = purchase_date.split('/');
-        const formattedDate = `${year}-${month}-${day}`; // Convert to 'YYYY-MM-DD' format
+    // Convert startDate to YYYY-MM-DD
+    let formattedStartDate = null;
+    let formattedEndDate = null;
 
-        query += " AND DATE_FORMAT(purchase_date, '%d/%m/%Y') = ?";
-        params.push(`${day}/${month}/${year}`); // Compare using 'DD/MM/YYYY' format
+    if (startDate) {
+        // const [day, month, year] = startDate.split('-');
+        // formattedStartDate = `${year}-${month}-${day}`;
+        console.log("startDate", startDate);
+        // formattedStartDate = startDate.split('-').reverse().join('-');
+        formattedStartDate = startDate;
     }
 
-    // Filter by 'created_at' in 'DD/MM/YYYY' format
-    if (created_at) {
-        const [day, month, year] = created_at.split('/');
-        const formattedDate = `${year}-${month}-${day}`;
+    if (endDate) {
+        // const [day, month, year] = endDate.split('-');
+        // formattedEndDate = `${year}-${month}-${day}`;
+        formattedEndDate = endDate;
+    }
 
-        query += " AND DATE_FORMAT(created_at, '%d/%m/%Y') = ?";
-        params.push(`${day}/${month}/${year}`); // Compare using 'DD/MM/YYYY' format
+    if (formattedStartDate && formattedEndDate) {
+        query += " AND purchase_date BETWEEN ? AND ?";
+        params.push(formattedStartDate, formattedEndDate);
+    } else if (formattedStartDate) {
+        query += " AND purchase_date >= ?";
+        params.push(formattedStartDate);
+    } else if (formattedEndDate) {
+        query += " AND purchase_date <= ?";
+        params.push(formattedEndDate);
     }
 
     try {
         const [rows] = await db.execute(query, params);
         res.status(200).json({ status: 200, length: rows.length, data: rows });
     } catch (error) {
-        res.status(200).json({ status: 500, message: error.message });
+        res.status(500).json({ status: 500, message: error.message });
     }
 };
+
+
 
 
 

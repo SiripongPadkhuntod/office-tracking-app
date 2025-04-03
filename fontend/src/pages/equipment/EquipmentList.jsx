@@ -88,7 +88,7 @@ function EquipmentList() {
       if (dateRange.endDate) {
         searchParams.endDate = dateRange.endDate;
       }
-      
+
       const response = await equipmentService.searchEquipment(searchParams);
       
       if (response.data && Array.isArray(response.data.data)) {
