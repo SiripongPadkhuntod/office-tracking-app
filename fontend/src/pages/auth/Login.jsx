@@ -60,6 +60,11 @@ function Login() {
     // แสดง dialog หรือ modal แทนการใช้ alert
     setAlertType('info');
     setAlertMessage('กรุณาติดต่อผู้ดูแลระบบเพื่อรีเซ็ตรหัสผ่านของคุณ');
+
+    setTimeout(() => {
+      setAlertMessage('');
+    }
+    , 3000);
   }
 
   return (
