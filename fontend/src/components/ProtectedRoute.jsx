@@ -5,8 +5,8 @@ import Loading from './Loading';
 function ProtectedRoute({ children }) {
   const { currentUser, loading } = useAuth();
 
-  console.log("ProtectedRoute: currentUser:", currentUser);
-  console.log("ProtectedRoute: loading:", loading);
+  // console.log("ProtectedRoute: currentUser:", currentUser);
+  // console.log("ProtectedRoute: loading:", loading);
 
   if (loading) {
     return <Loading />;

@@ -96,6 +96,6 @@ export const getProfile = async (req, res) => {
 
     res.status(200).json({ status: 200, user: rows[0] });
   } catch (error) {
-    res.status(200).json({ status: 500, message: error.message });
+    res.status(200).json({ status: 500, message: error.message  });
   }
 };

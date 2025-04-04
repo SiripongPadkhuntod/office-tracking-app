@@ -9,8 +9,6 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Profile from './pages/auth/Profile';
 import EquipmentList from './pages/equipment/EquipmentList';
-import AddEquipment from './pages/equipment/AddEquipment';
-import EditEquipment from './pages/equipment/EditEquipment';
 import UserList from './pages/users/UserList';
 
 function App() {
@@ -33,24 +31,6 @@ function App() {
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/equipment" element={
-              <ProtectedRoute>
-                <EquipmentList />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/equipment/add" element={
-              <ProtectedRoute>
-                <AddEquipment />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/equipment/edit/:id" element={
-              <ProtectedRoute>
-                <EditEquipment />
               </ProtectedRoute>
             } />
             

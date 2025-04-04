@@ -28,47 +28,73 @@ export const getAllEquipment = async (req, res) => {
 // GET /api/equipment/search
 export const searchEquipment = async (req, res) => {
     try {
-        const { type, startDate, endDate, searchType, searchTerm } = req.query;
-    let query = "SELECT * FROM equipment WHERE 1";
-    const params = [];
+        const { type, startDate, endDate, searchType, searchTerm, createdStartDate, createdEndDate } = req.query;
+        // console.log("req.body", req.body);
+        console.log("req.query", req.query);
+        let query = "SELECT * FROM equipment WHERE 1";
+        const params = [];
 
-    if (type) {
-        query += " AND LOWER(type) = LOWER(?)";
-        params.push(type);
-    }
-    if (searchType === "code" && searchTerm) {
-        query += " AND LOWER(id) LIKE ?";
-        params.push(searchTerm.toLowerCase());
-    }
-    else if (searchType === "name" && searchTerm) {
-        query += " AND LOWER(name) LIKE LOWER(?)";
-        params.push(`%${searchTerm.toLowerCase()}%`);
-    }
-    // Convert startDate to YYYY-MM-DD
-    let formattedStartDate = null;
-    let formattedEndDate = null;
+        if (type) {
+            query += " AND LOWER(type) = LOWER(?)";
+            params.push(type.toLowerCase());
+        }
+        
+        // Handle code search with range support (e.g., 180002-180010)
+        if (searchType.toLowerCase() === "code" && searchTerm) {
+            if (searchTerm.includes('-')) {
+                // Handle range search
+                const [startCode, endCode] = searchTerm.split('-');
+                if (startCode && endCode) {
+                    query += " AND id >= ? AND id <= ?";
+                    params.push(startCode.trim(), endCode.trim());
+                }
+            } else {
+                // Regular code search
+                query += " AND LOWER(id) LIKE ?";
+                params.push(searchTerm.toLowerCase());
+            }
+        }
+        else if (searchType === "name" && searchTerm) {
+            query += " AND LOWER(name) LIKE LOWER(?)";
+            params.push(`%${searchTerm.toLowerCase()}%`);
+        }
+        
+        // Handle purchase date filtering
+        let formattedStartDate = null;
+        let formattedEndDate = null;
 
-    if (startDate) {
-        formattedStartDate = startDate;
-    }
+        if (startDate) {
+            formattedStartDate = startDate;
+        }
 
-    if (endDate) {
-        formattedEndDate = endDate;
-    }
+        if (endDate) {
+            formattedEndDate = endDate;
+        }
 
-    if (formattedStartDate && formattedEndDate) {
-        query += " AND purchase_date BETWEEN ? AND ?";
-        params.push(formattedStartDate, formattedEndDate);
-    } else if (formattedStartDate) {
-        query += " AND purchase_date >= ?";
-        params.push(formattedStartDate);
-    } else if (formattedEndDate) {
-        query += " AND purchase_date <= ?";
-        params.push(formattedEndDate);
-    }
+        if (formattedStartDate && formattedEndDate) {
+            query += " AND purchase_date BETWEEN ? AND ?";
+            params.push(formattedStartDate, formattedEndDate);
+        } else if (formattedStartDate) {
+            query += " AND purchase_date >= ?";
+            params.push(formattedStartDate);
+        } else if (formattedEndDate) {
+            query += " AND purchase_date <= ?";
+            params.push(formattedEndDate);
+        }
+        
+        // Handle created_at date filtering
+        if (createdStartDate && createdEndDate) {
+            query += " AND created_at BETWEEN ? AND ?";
+            params.push(createdStartDate, createdEndDate);
+        } else if (createdStartDate) {
+            query += " AND created_at >= ?";
+            params.push(createdStartDate);
+        } else if (createdEndDate) {
+            query += " AND created_at <= ?";
+            params.push(createdEndDate);
+        }
 
-    // console.log("query", query);
-
+        // console.log("query", query);
 
         const [rows] = await db.execute(query, params);
         res.status(200).json({ status: 200, length: rows.length, data: rows });

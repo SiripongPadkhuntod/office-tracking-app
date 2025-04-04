@@ -27,7 +27,19 @@ app.use("/api", equipmentRoutes);
 app.use("/api/users", userRoutes);
 
 app.get("/", (req, res) => {
-  res.send("API is running...");
+  res.send({
+    status: 200,
+    message: "Welcome to the Equipment Management API",
+    routes: {
+        auth: {
+          login: "/api/auth/login",
+          register: "/api/auth/register",
+          profile : "/api/auth/profile",
+        },
+      equipment: "/api/equipment",
+      users: "/api/users",
+    },
+  });
 });
 
 app.listen(PORT, () => {

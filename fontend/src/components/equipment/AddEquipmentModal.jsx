@@ -90,6 +90,7 @@ function AddEquipmentModal({ isOpen, onClose, onSuccess }) {
             <option value="">เลือกประเภทอุปกรณ์</option>
             <option value="Laptop">Laptop</option>
             <option value="Mobile">Mobile</option>
+            <option value="Printer">Printer</option>
             <option value="Desktop">Desktop</option>
             <option value="Monitor">Monitor</option>
             <option value="Peripheral">Peripheral</option>
