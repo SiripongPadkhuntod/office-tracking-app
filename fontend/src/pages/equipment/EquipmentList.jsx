@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PlusCircle, Search, Edit2, AlertCircle, RefreshCw, Filter, Calendar, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { PlusCircle, Search, Edit2, AlertCircle, RefreshCw, Filter, Calendar, X, ChevronUp, ChevronDown, Trash2, Eye } from 'lucide-react';
 import equipmentService from '../../services/equipmentService';
 import AlertMessage from '../../components/AlertMessage';
 import Loading from '../../components/Loading';
@@ -10,15 +10,15 @@ function EquipmentList() {
   const [equipment, setEquipment] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState('name'); // Default search by name
+  const [searchType, setSearchType] = useState('name');
   const [message, setMessage] = useState({ text: '', type: '' });
   const [filtering, setFiltering] = useState('all');
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [dateRange, setDateRange] = useState({
-    purchasepurchaseStartDate: '',
+    purchaseStartDate: '',
     purchaseEndDate: '',
-    startCreate: '',
-    endCreate: ''
+    createdStartDate: '',
+    createdEndDate: ''
   });
   const [typeFilter, setTypeFilter] = useState('');
   const [equipmentTypes, setEquipmentTypes] = useState([]);
@@ -26,11 +26,15 @@ function EquipmentList() {
     key: 'id',
     direction: 'asc'
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] = useState(null);
 
   const fetchEquipment = async () => {
     try {
@@ -113,6 +117,7 @@ function EquipmentList() {
 
       if (response.data && Array.isArray(response.data.data)) {
         setEquipment(response.data.data);
+        setCurrentPage(1); // Reset to first page after search
 
         if (response.data.data.length === 0) {
           setMessage({ text: 'ไม่พบข้อมูลที่ค้นหา', type: 'info' });
@@ -152,7 +157,6 @@ function EquipmentList() {
     setTypeFilter('');
     setDateRange({ purchaseStartDate: '', purchaseEndDate: '', createdStartDate: '', createdEndDate: '' });
     fetchEquipment();
-
   };
 
   const getStatusColor = (status) => {
@@ -187,6 +191,7 @@ function EquipmentList() {
 
   const handleFilterChange = (filter) => {
     setFiltering(filter);
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   // Sort function
@@ -204,16 +209,7 @@ function EquipmentList() {
     if (sortConfig.key) {
       sortableItems.sort((a, b) => {
         // Handle date comparison
-        if (sortConfig.key === 'purchase_date') {
-          const dateA = new Date(a[sortConfig.key]);
-          const dateB = new Date(b[sortConfig.key]);
-          if (sortConfig.direction === 'asc') {
-            return dateA - dateB;
-          }
-          return dateB - dateA;
-        }
-
-        if (sortConfig.key === 'created_at') {
+        if (sortConfig.key === 'purchase_date' || sortConfig.key === 'created_at') {
           const dateA = new Date(a[sortConfig.key]);
           const dateB = new Date(b[sortConfig.key]);
           if (sortConfig.direction === 'asc') {
@@ -254,6 +250,14 @@ function EquipmentList() {
     return item.status === filtering;
   });
 
+  // Pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredEquipment.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   // Component for sort indicator
   const SortIcon = ({ columnKey }) => {
     if (sortConfig.key !== columnKey) {
@@ -283,6 +287,12 @@ function EquipmentList() {
     setIsEditModalOpen(true);
   };
 
+  // Open view modal
+  const openViewModal = (item) => {
+    setSelectedEquipment(item);
+    setIsViewModalOpen(true);
+  };
+
   // Handle success after add/edit/delete
   const handleOperationSuccess = () => {
     fetchEquipment();
@@ -294,10 +304,85 @@ function EquipmentList() {
     }, 3000);
   };
 
+  // View Modal Component
+  const ViewEquipmentModal = ({ isOpen, onClose, equipment }) => {
+    if (!isOpen || !equipment) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+          <div className="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-900">รายละเอียดอุปกรณ์</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+              <X size={20} />
+            </button>
+          </div>
+          <div className="px-6 py-4">
+            <div className="mb-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold">{equipment.name}</h2>
+              <span className={`px-3 py-1 text-xs leading-5 font-semibold rounded-full border ${getStatusColor(equipment.status)}`}>
+                <span className="mr-1">{getStatusIcon(equipment.status)}</span> {equipment.status}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="text-sm text-gray-500 mb-1">รหัสอุปกรณ์</div>
+                <div className="font-medium">{equipment.id || '-'}</div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="text-sm text-gray-500 mb-1">ประเภท</div>
+                <div className="font-medium">{equipment.type}</div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="text-sm text-gray-500 mb-1">วันที่ซื้อ</div>
+                <div className="font-medium">
+                  {new Date(equipment.purchase_date).toLocaleDateString('th-TH', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })}
+                </div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="text-sm text-gray-500 mb-1">วันที่สร้างข้อมูล</div>
+                <div className="font-medium">
+                  {new Date(equipment.created_at).toLocaleDateString('th-TH', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })}
+                </div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg sm:col-span-2">
+                <div className="text-sm text-gray-500 mb-1">รายละเอียด</div>
+                <div className="font-medium">{equipment.details || '-'}</div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 px-6 py-4 flex justify-end rounded-b-lg">
+            <button
+              onClick={() => {
+                onClose();
+                openEditModal(equipment.id);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-150 ease-in-out shadow-sm text-sm font-medium ml-2"
+            >
+              <Edit2 size={16} className="inline mr-1" /> แก้ไข
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderMobileView = () => (
     <div className="grid grid-cols-1 gap-4 sm:hidden">
-      {filteredEquipment.map((item) => (
-        <div key={item.id} className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
+      {currentItems.map((item) => (
+        <div 
+          key={item.id} 
+          className="bg-white rounded-lg shadow-md p-4 border border-gray-200"
+          onClick={() => openViewModal(item)}
+        >
           <div className="flex justify-between items-start">
             <h3 className="font-semibold text-lg">{item.name}</h3>
             <span className={`px-3 py-1 text-xs leading-5 font-semibold rounded-full border ${getStatusColor(item.status)}`}>
@@ -316,25 +401,34 @@ function EquipmentList() {
             </div>
             <div className="flex justify-between py-1 border-b border-gray-100">
               <span>วันที่ซื้อ:</span>
-              <span className="font-medium text-gray-700">{new Date(item.purchase_date).toLocaleDateString('en-US')}</span>
-            </div>
-
-            <div className="flex justify-between py-1">
-              <span>รายละเอียด:</span>
-              <span className="font-medium text-gray-700">{item.details || '-'}</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-gray-100">
-              <span>วันที่สร้าง:</span>
-              <span className="font-medium text-gray-700">{new Date(item.created_at).toLocaleDateString('en-US')}</span>
+              <span className="font-medium text-gray-700">
+                {new Date(item.purchase_date).toLocaleDateString('th-TH', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })}
+              </span>
             </div>
           </div>
 
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end space-x-2">
             <button
-              onClick={() => openEditModal(item.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                openEditModal(item.id);
+              }}
               className="flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm"
             >
               <Edit2 size={16} className="mr-1" /> แก้ไข
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                openViewModal(item);
+              }}
+              className="flex items-center text-gray-600 hover:text-gray-800 font-medium text-sm"
+            >
+              <Eye size={16} className="mr-1" /> ดู
             </button>
           </div>
         </div>
@@ -343,7 +437,7 @@ function EquipmentList() {
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+    <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold text-gray-800">รายการอุปกรณ์</h1>
         <button
@@ -365,14 +459,8 @@ function EquipmentList() {
           <div className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-grow">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-
-                </div>
                 <div className="flex relative">
-                  {/* ไอคอนแว่นขยาย */}
                   <Search size={18} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
-
-                  {/* Dropdown สำหรับเลือกประเภทการค้นหา */}
                   <select
                     className="pl-8 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm py-2 px-2 focus:ring-blue-500 focus:border-blue-500"
                     value={searchType}
@@ -381,8 +469,6 @@ function EquipmentList() {
                     <option value="name">ชื่ออุปกรณ์</option>
                     <option value="code">รหัสอุปกรณ์</option>
                   </select>
-
-                  {/* ช่องค้นหา */}
                   <input
                     type="text"
                     placeholder={`ค้นหาตาม${searchType === 'name' ? 'ชื่อ' : 'รหัส'}...`}
@@ -427,71 +513,71 @@ function EquipmentList() {
             </div>
 
             {showAdvancedSearch && (
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ประเภทอุปกรณ์</label>
-                  <select
-                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-                    value={typeFilter}
-                    onChange={(e) => setTypeFilter(e.target.value)}
-                  >
-                    <option value="">-- เลือกประเภท --</option>
-                    {equipmentTypes.map((type, index) => (
-                      <option key={index} value={type}>{type}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ประเภทอุปกรณ์</label>
+                    <select
+                      className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+                      value={typeFilter}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                    >
+                      <option value="">-- เลือกประเภท --</option>
+                      {equipmentTypes.map((type, index) => (
+                        <option key={index} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <Calendar size={16} className="inline mr-1" /> วันที่เริ่มต้น (Purchase)
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-                    value={dateRange.purchaseStartDate}
-                    onChange={(e) => setDateRange({ ...dateRange, purchaseStartDate: e.target.value })}
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <Calendar size={16} className="inline mr-1" /> วันที่ซื้อ (เริ่มต้น)
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+                      value={dateRange.purchaseStartDate}
+                      onChange={(e) => setDateRange({ ...dateRange, purchaseStartDate: e.target.value })}
+                    />
+                  </div>
 
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <Calendar size={16} className="inline mr-1" /> วันที่สิ้นสุด (Purchase)
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-                    value={dateRange.purchaseEndDate}
-                    onChange={(e) => setDateRange({ ...dateRange, purchaseEndDate: e.target.value })}
-                    min={dateRange.purchaseStartDate}
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <Calendar size={16} className="inline mr-1" /> วันที่ซื้อ (สิ้นสุด)
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+                      value={dateRange.purchaseEndDate}
+                      onChange={(e) => setDateRange({ ...dateRange, purchaseEndDate: e.target.value })}
+                      min={dateRange.purchaseStartDate}
+                    />
+                  </div>
 
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <Calendar size={16} className="inline mr-1" /> วันที่สร้าง (เริ่มต้น)
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+                      value={dateRange.createdStartDate}
+                      onChange={(e) => setDateRange({ ...dateRange, createdStartDate: e.target.value })}
+                    />
+                  </div>
 
-
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <Calendar size={16} className="inline mr-1" />  วันที่เริ่มต้น (Created)
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-                    value={dateRange.createdStartDate}
-                    onChange={(e) => setDateRange({ ...dateRange, createdStartDate: e.target.value })}
-                  />
-                </div>
-
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <Calendar size={16} className="inline mr-1" /> วันที่สิ้นสุด (Created)
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-                    value={dateRange.createdEndDate}
-                    onChange={(e) => setDateRange({ ...dateRange, createdEndDate: e.target.value })}
-                    min={dateRange.createdStartDate}
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <Calendar size={16} className="inline mr-1" /> วันที่สร้าง (สิ้นสุด)
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+                      value={dateRange.createdEndDate}
+                      onChange={(e) => setDateRange({ ...dateRange, createdEndDate: e.target.value })}
+                      min={dateRange.createdStartDate}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -507,7 +593,7 @@ function EquipmentList() {
             : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
             }`}
         >
-          ทั้งหมด
+          ทั้งหมด ({equipment.length})
         </button>
         <button
           onClick={() => handleFilterChange('Active')}
@@ -516,7 +602,7 @@ function EquipmentList() {
             : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
             }`}
         >
-          <span className="mr-1">●</span> Active
+          <span className="mr-1">●</span> Active ({equipment.filter(item => item.status === 'Active').length})
         </button>
         <button
           onClick={() => handleFilterChange('In Repair')}
@@ -525,7 +611,7 @@ function EquipmentList() {
             : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
             }`}
         >
-          <span className="mr-1">◐</span> In Repair
+          <span className="mr-1">◐</span> In Repair ({equipment.filter(item => item.status === 'In Repair').length})
         </button>
         <button
           onClick={() => handleFilterChange('Inactive')}
@@ -534,16 +620,16 @@ function EquipmentList() {
             : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
             }`}
         >
-          <span className="mr-1">○</span> Inactive
+          <span className="mr-1">○</span> Inactive ({equipment.filter(item => item.status === 'Inactive').length})
         </button>
         <button
           onClick={() => handleFilterChange('Disposed')}
           className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${filtering === 'Disposed'
-            ? 'bg-red-100 text-red-800 border border-red-200'
+            ? 'bg-gray-100 text-gray-800 border border-gray-300'
             : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
             }`}
         >
-          <span className="mr-1">☒</span> Disposed
+          <span className="mr-1">☒</span> Disposed ({equipment.filter(item => item.status === 'Disposed').length})
         </button>
       </div>
 
@@ -555,107 +641,104 @@ function EquipmentList() {
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <AlertCircle size={48} className="text-gray-400 mb-4" />
           <p className="text-gray-500 text-lg">ไม่พบข้อมูลอุปกรณ์</p>
-          <p className="text-gray-400 text-sm mt-2">ลองเปลี่ยนคำค้นหาหรือตัวกรองของคุณ</p>
-        </div>
+          <p className="text-gray-500 text-sm">กรุณาลองค้นหาหรือเพิ่มอุปกรณ์ใหม่</p>
+          <p className="text-gray-500 text-lg">ไม่พบข้อมูลอุปกรณ์</p>
+<p className="text-gray-400 text-sm mt-2">ลองเปลี่ยนตัวเลือกในการค้นหาหรือตัวกรอง</p>
+</div>
       ) : (
         <>
-          {/* Mobile view */}
-          {renderMobileView()}
-
-          {/* Desktop view */}
+          {/* Desktop view - Table */}
           <div className="hidden sm:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 shadow-sm border-gray-200 border rounded-lg">
-              <thead className="bg-gray-50">
-                <tr>
+            <table className="min-w-full border-b border-gray-200">
+              <thead>
+                <tr className="bg-gray-50">
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
                     onClick={() => requestSort('id')}
                   >
-                    รหัส <SortIcon columnKey="id" />
-                  </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
-                    onClick={() => requestSort('type')}
-                  >
-                    ประเภท <SortIcon columnKey="type" />
+                    <span className="flex items-center">
+                      รหัส <SortIcon columnKey="id" />
+                    </span>
                   </th>
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
                     onClick={() => requestSort('name')}
                   >
-                    ชื่ออุปกรณ์ <SortIcon columnKey="name" />
+                    <span className="flex items-center">
+                      ชื่ออุปกรณ์ <SortIcon columnKey="name" />
+                    </span>
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
+                    onClick={() => requestSort('type')}
+                  >
+                    <span className="flex items-center">
+                      ประเภท <SortIcon columnKey="type" />
+                    </span>
                   </th>
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
                     onClick={() => requestSort('purchase_date')}
                   >
-                    วันที่ซื้อ <SortIcon columnKey="purchase_date" />
+                    <span className="flex items-center">
+                      วันที่ซื้อ <SortIcon columnKey="purchase_date" />
+                    </span>
                   </th>
-
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
                     onClick={() => requestSort('status')}
                   >
-                    สถานะ <SortIcon columnKey="status" />
-                  </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
-                    onClick={() => requestSort('created_at')}
-                  >
-                    วันที่สร้าง <SortIcon columnKey="created_at" />
-                  </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
-                    onClick={() => requestSort('details')}
-                  >
-                    รายละเอียด <SortIcon columnKey="details" />
+                    <span className="flex items-center">
+                      สถานะ <SortIcon columnKey="status" />
+                    </span>
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    การจัดการ
+                    จัดการ
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredEquipment.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                {currentItems.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50" onClick={() => openViewModal(item)}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {item.id || '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                      {item.type}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {item.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {new Date(item.purchase_date).toLocaleDateString('en-GB', {
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {item.type}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(item.purchase_date).toLocaleDateString('th-TH', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
                       })}
                     </td>
-
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-3 py-1 text-xs leading-5 font-semibold rounded-full border ${getStatusColor(item.status)}`}>
                         <span className="mr-1">{getStatusIcon(item.status)}</span> {item.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {new Date(item.created_at).toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                      })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {item.details || '-'}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
-                        onClick={() => openEditModal(item.id)}
-                        className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(item.id);
+                        }}
+                        className="text-blue-600 hover:text-blue-900 mr-4 focus:outline-none"
                       >
-                        <Edit2 size={16} className="mr-1" /> แก้ไข
+                        <Edit2 size={16} className="inline" /> แก้ไข
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openViewModal(item);
+                        }}
+                        className="text-gray-600 hover:text-gray-900 focus:outline-none"
+                      >
+                        <Eye size={16} className="inline" /> ดู
                       </button>
                     </td>
                   </tr>
@@ -663,31 +746,107 @@ function EquipmentList() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile view */}
+          {renderMobileView()}
+
+          {/* Pagination */}
+          <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
+            <div className="flex items-center">
+              <select
+                className="border border-gray-300 rounded-md text-sm py-1 px-2 focus:ring-blue-500 focus:border-blue-500"
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1); // Reset to first page when changing items per page
+                }}
+              >
+                <option value={5}>5 / หน้า</option>
+                <option value={10}>10 / หน้า</option>
+                <option value={20}>20 / หน้า</option>
+                <option value={50}>50 / หน้า</option>
+              </select>
+              <span className="ml-3 text-sm text-gray-500">
+                แสดง {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredEquipment.length)} จาก {filteredEquipment.length} รายการ
+              </span>
+            </div>
+
+            <div className="flex">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded-l border ${currentPage === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                  : 'bg-white text-blue-600 hover:bg-blue-50 border-gray-300'}`}
+              >
+                &laquo; ก่อนหน้า
+              </button>
+
+              {Array.from({ length: totalPages }).map((_, i) => {
+                // Show first page, last page, and pages around current page
+                if (
+                  i === 0 ||
+                  i === totalPages - 1 ||
+                  (i >= currentPage - 2 && i <= currentPage + 2)
+                ) {
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => paginate(i + 1)}
+                      className={`px-3 py-1 border-t border-b ${currentPage === i + 1
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-blue-600 hover:bg-blue-50'} ${i === 0 ? 'border-l' : ''} ${i === totalPages - 1 ? 'border-r' : ''} border-gray-300`}
+                    >
+                      {i + 1}
+                    </button>
+                  );
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                  // Show dots for skipped pages
+                  return (
+                    <span
+                      key={i}
+                      className="px-3 py-1 border-t border-b border-gray-300 bg-white text-gray-500"
+                    >
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 rounded-r border ${currentPage === totalPages || totalPages === 0
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                  : 'bg-white text-blue-600 hover:bg-blue-50 border-gray-300'}`}
+              >
+                ถัดไป &raquo;
+              </button>
+            </div>
+          </div>
         </>
       )}
 
-      {/* Modals */}
-      {isAddModalOpen && (
-        <AddEquipmentModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={handleOperationSuccess}
-          equipmentTypes={equipmentTypes}
-        />
-      )}
-
-      {isEditModalOpen && (
-        <EditEquipmentModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedEquipmentId(null);
-          }}
-          onSuccess={handleOperationSuccess}
-          equipmentId={selectedEquipmentId}
-          equipmentTypes={equipmentTypes}
-        />
-      )}
+      {/* Modal Components */}
+      <AddEquipmentModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={handleOperationSuccess} 
+      />
+      
+      <EditEquipmentModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        equipmentId={selectedEquipmentId}
+        onSuccess={handleOperationSuccess} 
+      />
+      
+      <ViewEquipmentModal 
+        isOpen={isViewModalOpen} 
+        onClose={() => setIsViewModalOpen(false)} 
+        equipment={selectedEquipment} 
+      />
     </div>
   );
 }
