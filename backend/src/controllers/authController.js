@@ -26,7 +26,7 @@ export const registerUser = async (req, res) => {
     // Check if user already exists
     const [rows] = await db.execute("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
     if (rows.length > 0) {
-      return res.status(200).json({ status: 400, message: "Email already exists" });
+      return res.status(200).json({ status: 409, message: "Email already exists" });
     }
 
     // Hash Password
@@ -40,7 +40,7 @@ export const registerUser = async (req, res) => {
     // Insert user into database
     await db.execute("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", [name, email, hashedPassword]);
 
-    res.status(200).json({ status: 201, message: "User registered successfully" });
+    res.status(200).json({ status: 200, message: "User registered successfully" });
   } catch (error) {
     res.status(200).json({ status: 500, message: error.message });
   }
@@ -54,7 +54,7 @@ export const loginUser = async (req, res) => {
     // Check if user exists
     const [rows] = await db.execute("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
     if (rows.length === 0) {
-      return res.status(200).json({ status: 400, message: "Invalid email or password" });
+      return res.status(200).json({ status: 404, message: "User not found" });
     }
 
     const user = rows[0];
@@ -62,7 +62,7 @@ export const loginUser = async (req, res) => {
     // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(200).json({ status: 400, message: "Invalid email or password" });
+      return res.status(200).json({ status: 401, message: "Invalid email or password" });
     }
 
 
@@ -82,7 +82,7 @@ export const loginUser = async (req, res) => {
       user: { id: user.id, name: user.name, email: user.email },
     });
   } catch (error) {
-    res.status(200).json({ status: 500, message: error.message });
+    res.status(200).json({ status: 500, message: error.message, error: "Login" });
   }
 };
 

@@ -5,33 +5,67 @@ import { useAuth } from '../../context/AuthContext';
 import AlertMessage from '../../components/AlertMessage';
 import Loading from '../../components/Loading';
 
+
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState('error');
   const [showPassword, setShowPassword] = useState(false);
   const { login, loading } = useAuth();
   const navigate = useNavigate();
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage('');
-    
+    setAlertMessage('');
+
     try {
-      await login(email, password);
-      navigate('/equipment');
+      const response = await login(email, password , e);
+      // console.log('Login response:', response);
+    
+      if (response.success == true) {
+        // แสดงข้อความแจ้งเตือนว่าเข้าสู่ระบบสำเร็จ
+        // setAlertType('success');
+        // setAlertMessage('เข้าสู่ระบบสำเร็จ');
+      
+        // นำทางไปยังหน้า equipment หลังจาก delay สั้นๆ
+          navigate('/equipment');
+      }
+      else {
+        // setAlertType('error');
+        // setAlertMessage(response.message || 'เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบข้อมูล');
+        if(response.message == "Can't add new command when connection is in closed state") {
+          alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณ และลองอีกครั้ง');
+          return;
+        }
+        else{
+          alert(response.message );
+        }
+        
+      //   setTimeout(() => {
+      //     setAlertMessage(''); // ล้างข้อความแจ้งเตือนหลังจาก 3 วินาที
+      // }, 3000);
+      }
     } catch (error) {
       if (!error.response) {
-        setErrorMessage('Network Error - กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณ');
+        // setAlertType('error');
+        // setAlertMessage('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+        alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณ และลองอีกครั้ง');
         return;
       }
-      setErrorMessage(error.response?.data?.message || 'เข้าสู่ระบบล้มเหลว โปรดตรวจสอบอีเมลและรหัสผ่าน');
+      setAlertType('error');
+      setAlertMessage(error.response?.data?.message || 'เข้าสู่ระบบล้มเหลว โปรดตรวจสอบอีเมลและรหัสผ่าน');
     }
   };
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+
+  const forgotPassword = () => {
+    alert('กรุณาติดต่อผู้ดูแลระบบเพื่อรีเซ็ตรหัสผ่านของคุณ');
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4">
@@ -47,18 +81,13 @@ function Login() {
             เข้าสู่ระบบจัดการอุปกรณ์ของคุณ
           </p>
         </div>
-        
-        {errorMessage && (
-          <div className="mt-4">
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-              <div className="flex items-center">
-                <AlertCircle size={20} className="text-red-500" />
-                <p className="ml-3 text-sm text-red-700">{errorMessage}</p>
-              </div>
-            </div>
-          </div>
+
+        {alertMessage && (
+          <AlertMessage message={alertMessage} type={alertType} />
         )}
-        
+
+       
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -82,7 +111,7 @@ function Login() {
                 />
               </div>
             </div>
-            
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 รหัสผ่าน
@@ -133,9 +162,16 @@ function Login() {
             </div>
 
             <div className="text-sm">
-              <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+              {/* <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
                 ลืมรหัสผ่าน?
-              </Link>
+              </Link> */}
+              <button
+                type="button"
+                onClick={forgotPassword}
+                className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
+              >
+                ลืมรหัสผ่าน?
+              </button>
             </div>
           </div>
 

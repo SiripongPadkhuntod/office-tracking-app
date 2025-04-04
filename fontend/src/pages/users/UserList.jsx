@@ -94,7 +94,7 @@ function UserList() {
           {currentUsers.map((user) => (
             <div key={user.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
               <h3 className="text-xl font-semibold text-gray-800">{user.name}</h3>
-              <p className="text-sm text-gray-500">ID: {user.id}</p>
+              {/* <p className="text-sm text-gray-500">ID: {user.id}</p> */}
               <p className="text-sm text-gray-500">อีเมล: {user.email}</p>
               <div className="mt-4">
                 <span className="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
