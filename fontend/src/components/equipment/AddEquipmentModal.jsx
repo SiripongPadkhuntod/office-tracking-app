@@ -1,4 +1,3 @@
-// src/components/equipment/AddEquipmentModal.jsx
 import { useState } from 'react';
 import equipmentService from '../../services/equipmentService';
 import AlertMessage from '../AlertMessage';
@@ -70,66 +69,105 @@ function AddEquipmentModal({ isOpen, onClose, onSuccess }) {
     onClose();
   };
 
+  const equipmentTypes = [
+    { value: "Laptop", label: "Laptop" },
+    { value: "Mobile", label: "Mobile" },
+    { value: "Printer", label: "Printer" },
+    { value: "Desktop", label: "Desktop" },
+    { value: "Monitor", label: "Monitor" },
+    { value: "Peripheral", label: "Peripheral" },
+    { value: "Other", label: "Other" }
+  ];
+
+  const statusOptions = [
+    { value: "Active", label: "Active" },
+    { value: "In Repair", label: "In Repair" },
+    { value: "Inactive", label: "Inactive" },
+    { value: "Disposed", label: "Disposed" }
+  ];
+
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="เพิ่มอุปกรณ์ใหม่" size="lg">
-      {message.text && <AlertMessage message={message.text} type={message.type} />}
+      {message.text && (
+        <div className="mb-4">
+          <AlertMessage message={message.text} type={message.type} />
+        </div>
+      )}
       
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="type">
-            ประเภทอุปกรณ์
-          </label>
-          <select
-            id="type"
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            required
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          >
-            <option value="">เลือกประเภทอุปกรณ์</option>
-            <option value="Laptop">Laptop</option>
-            <option value="Mobile">Mobile</option>
-            <option value="Printer">Printer</option>
-            <option value="Desktop">Desktop</option>
-            <option value="Monitor">Monitor</option>
-            <option value="Peripheral">Peripheral</option>
-            <option value="Other">Other</option>
-          </select>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="type">
+              ประเภทอุปกรณ์
+            </label>
+            <select
+              id="type"
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              required
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">เลือกประเภทอุปกรณ์</option>
+              {equipmentTypes.map(type => (
+                <option key={type.value} value={type.value}>{type.label}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+              ชื่ออุปกรณ์
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              placeholder="ชื่ออุปกรณ์"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
         </div>
         
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-            ชื่ออุปกรณ์
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            placeholder="ชื่ออุปกรณ์"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="purchase_date">
+              วันที่ซื้อ
+            </label>
+            <input
+              id="purchase_date"
+              name="purchase_date"
+              type="date"
+              value={formData.purchase_date}
+              onChange={handleChange}
+              required
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="status">
+              สถานะ
+            </label>
+            <select
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              required
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {statusOptions.map(status => (
+                <option key={status.value} value={status.value}>{status.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
         
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="purchase_date">
-            วันที่ซื้อ
-          </label>
-          <input
-            id="purchase_date"
-            name="purchase_date"
-            type="date"
-            value={formData.purchase_date}
-            onChange={handleChange}
-            required
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          />
-        </div>
-        
-        <div className="mb-4">
+        <div>
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="details">
             รายละเอียด
           </label>
@@ -139,41 +177,22 @@ function AddEquipmentModal({ isOpen, onClose, onSuccess }) {
             placeholder="รายละเอียดอุปกรณ์"
             value={formData.details}
             onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline h-24"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-32"
           />
         </div>
         
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="status">
-            สถานะ
-          </label>
-          <select
-            id="status"
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            required
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          >
-            <option value="Active">Active</option>
-            <option value="In Repair">In Repair</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Inactive">Disposed</option>
-          </select>
-        </div>
-        
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-end space-x-4 pt-4 border-t border-gray-200">
           <button
             type="button"
             onClick={handleClose}
-            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             ยกเลิก
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             {loading ? <Loading /> : 'บันทึก'}
           </button>
