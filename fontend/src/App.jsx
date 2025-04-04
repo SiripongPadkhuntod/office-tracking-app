@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import { Analytics } from '@vercel/analytics/react';
 
 // Pages
 import Login from './pages/auth/Login';
@@ -14,6 +15,7 @@ import UserList from './pages/users/UserList';
 function App() {
   return (
     <Router>
+     
       <AuthProvider>
         <Routes>
           {/* Public routes */}
@@ -42,6 +44,7 @@ function App() {
           </Route>
         </Routes>
       </AuthProvider>
+      <Analytics />
     </Router>
   );
 }
