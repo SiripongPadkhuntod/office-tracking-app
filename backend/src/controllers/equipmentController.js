@@ -17,7 +17,7 @@ const logAction = async (action_type, equipment_id, user_id, details) => {
 // GET /api/equipment
 export const getAllEquipment = async (req, res) => {
     try {
-        const [rows] = await db.execute("SELECT * FROM equipment");
+        const [rows] = await db.execute("SELECT * FROM equipment WHERE active = 1");
         res.status(200).json({ status: 200, length: rows.length, data: rows });
     } catch (error) {
         res.status(200).json({ status: 500, message: error.message });
@@ -25,22 +25,20 @@ export const getAllEquipment = async (req, res) => {
 };
 
 
-// GET /api/equipment/search
 export const searchEquipment = async (req, res) => {
     try {
         const { type, startDate, endDate, searchType, searchTerm, createdStartDate, createdEndDate } = req.query;
-        // console.log("req.body", req.body);
         console.log("req.query", req.query);
         let query = "SELECT * FROM equipment WHERE 1";
         const params = [];
 
         if (type) {
             query += " AND LOWER(type) = LOWER(?)";
-            params.push(type.toLowerCase());
+            params.push(type);
         }
         
         // Handle code search with range support (e.g., 180002-180010)
-        if (searchType.toLowerCase() === "code" && searchTerm) {
+        if (searchType && searchType.toLowerCase() === "code" && searchTerm) {
             if (searchTerm.includes('-')) {
                 // Handle range search
                 const [startCode, endCode] = searchTerm.split('-');
@@ -54,36 +52,26 @@ export const searchEquipment = async (req, res) => {
                 params.push(searchTerm.toLowerCase());
             }
         }
-        else if (searchType === "name" && searchTerm) {
+        else if (searchType && searchType === "name" && searchTerm ) {
             query += " AND LOWER(name) LIKE LOWER(?)";
             params.push(`%${searchTerm.toLowerCase()}%`);
         }
-        
-        // Handle purchase date filtering
-        let formattedStartDate = null;
-        let formattedEndDate = null;
 
-        if (startDate) {
-            formattedStartDate = startDate;
-        }
 
-        if (endDate) {
-            formattedEndDate = endDate;
-        }
-
-        if (formattedStartDate && formattedEndDate) {
+        if (startDate && endDate) {
             query += " AND purchase_date BETWEEN ? AND ?";
-            params.push(formattedStartDate, formattedEndDate);
-        } else if (formattedStartDate) {
+            params.push(startDate, endDate);
+        } else if (startDate) {
             query += " AND purchase_date >= ?";
-            params.push(formattedStartDate);
-        } else if (formattedEndDate) {
+            params.push(startDate);
+        } else if (endDate) {
             query += " AND purchase_date <= ?";
-            params.push(formattedEndDate);
+            params.push(endDate);
         }
         
         // Handle created_at date filtering
         if (createdStartDate && createdEndDate) {
+
             query += " AND created_at BETWEEN ? AND ?";
             params.push(createdStartDate, createdEndDate);
         } else if (createdStartDate) {
@@ -93,8 +81,7 @@ export const searchEquipment = async (req, res) => {
             query += " AND created_at <= ?";
             params.push(createdEndDate);
         }
-
-        // console.log("query", query);
+;
 
         const [rows] = await db.execute(query, params);
         res.status(200).json({ status: 200, length: rows.length, data: rows });
@@ -102,11 +89,6 @@ export const searchEquipment = async (req, res) => {
         res.status(500).json({ status: 500, message: error.message });
     }
 };
-
-
-
-
-
 
 
 
@@ -118,11 +100,7 @@ export const addEquipment = async (req, res) => {
     try {
         const result = await db.execute("INSERT INTO equipment (type, name, purchase_date, details, status) VALUES (?, ?, ?, ?, ?)",
             [type, name, purchase_date, details, status]);
-
-
         await logAction('add', result[0].insertId, user_id, `Added new equipment: ${name}`);
-
-
         res.status(200).json({ status: 201, message: "Equipment added successfully" });
     } catch (error) {
         res.status(200).json({ status: 500, message: error.message });
@@ -131,9 +109,9 @@ export const addEquipment = async (req, res) => {
 
 // Update Equipment
 export const updateEquipment = async (req, res) => {
-    const { id } = req.params; // Get the equipment ID from the URL parameter
+    const { id } = req.params; 
     const { type, name, purchase_date, details, status } = req.body;
-    const user_id = req.user.id;  // Assuming user info is available in the request
+    const user_id = req.user.id; 
 
     try {
         const [existingEquipment] = await db.execute("SELECT * FROM equipment WHERE id = ?", [id]);
@@ -156,28 +134,30 @@ export const updateEquipment = async (req, res) => {
     }
 };
 
-// // Delete Equipment
-// export const deleteEquipment = async (req, res) => {
-//     const { id } = req.params;
-//     const user_id = req.user.id;  // Assuming user info is available in the request
+// Delete Equipment
+export const deleteEquipment = async (req, res) => {
+    const { id } = req.params;
+    const user_id = req.user.id;  // Assuming user info is available in the request
 
-//     try {
-//         const [existingEquipment] = await db.execute("SELECT * FROM office_equipment WHERE id = ?", [id]);
-//         if (existingEquipment.length === 0) {
-//             return res.status(404).json({ status: 404, message: "Equipment not found" });
-//         }
+    try {
+        const [existingEquipment] = await db.execute("SELECT * FROM equipment WHERE id = ? ", [id]);
+        if (existingEquipment.length === 0) {
+            return res.status(404).json({ status: 404, message: "Equipment not found" });
+        }
 
-//         // Delete the equipment
-//         await db.execute("DELETE FROM office_equipment WHERE id = ?", [id]);
+        // Delete the equipment (set active to 0)
+        await db.execute("UPDATE equipment SET active = 0 WHERE id = ?", [id]);
 
-//         // Log the delete action
-//         await logAction('delete', id, user_id, `Deleted equipment with ID: ${id}`);
+        
 
-//         res.status(200).json({ status: 200, message: "Equipment deleted successfully" });
-//     } catch (error) {
-//         res.status(500).json({ status: 500, message: error.message });
-//     }
-// };
+        // Log the delete action
+        await logAction('delete', id, user_id, `Deleted equipment: ${existingEquipment[0].name}`);
+
+        res.status(200).json({ status: 200, message: "Equipment deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ status: 500, message: error.message });
+    }
+};
 
 export const getEquipmentById = async (req, res) => {
     const { id } = req.params; // Get the equipment ID from the URL parameter

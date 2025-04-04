@@ -15,8 +15,10 @@ function EquipmentList() {
   const [filtering, setFiltering] = useState('all');
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [dateRange, setDateRange] = useState({
-    startDate: '',
-    endDate: ''
+    purchasepurchaseStartDate: '',
+    purchaseEndDate: '',
+    startCreate: '',
+    endCreate: ''
   });
   const [typeFilter, setTypeFilter] = useState('');
   const [equipmentTypes, setEquipmentTypes] = useState([]);
@@ -24,7 +26,7 @@ function EquipmentList() {
     key: 'id',
     direction: 'asc'
   });
-  
+
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -73,7 +75,7 @@ function EquipmentList() {
   const handleSearch = async (e) => {
     e.preventDefault();
 
-    if (!searchTerm.trim() && !typeFilter && !dateRange.startDate && !dateRange.endDate) {
+    if (!searchTerm.trim() && !typeFilter && !dateRange.purchaseStartDate && !dateRange.purchaseEndDate) {
       return fetchEquipment();
     }
 
@@ -91,12 +93,20 @@ function EquipmentList() {
         searchParams.type = typeFilter;
       }
 
-      if (dateRange.startDate) {
-        searchParams.startDate = dateRange.startDate;
+      if (dateRange.purchaseStartDate) {
+        searchParams.purchaseStartDate = dateRange.purchaseStartDate;
       }
 
-      if (dateRange.endDate) {
-        searchParams.endDate = dateRange.endDate;
+      if (dateRange.purchaseEndDate) {
+        searchParams.purchaseEndDate = dateRange.purchaseEndDate;
+      }
+
+      if (dateRange.createdStartDate) {
+        searchParams.createdStartDate = dateRange.createdStartDate;
+      }
+
+      if (dateRange.createdEndDate) {
+        searchParams.createdEndDate = dateRange.createdEndDate;
       }
 
       const response = await equipmentService.searchEquipment(searchParams);
@@ -140,8 +150,9 @@ function EquipmentList() {
     setSearchTerm('');
     setSearchType('name');
     setTypeFilter('');
-    setDateRange({ startDate: '', endDate: '' });
+    setDateRange({ purchaseStartDate: '', purchaseEndDate: '', createdStartDate: '', createdEndDate: '' });
     fetchEquipment();
+
   };
 
   const getStatusColor = (status) => {
@@ -201,7 +212,16 @@ function EquipmentList() {
           }
           return dateB - dateA;
         }
-        
+
+        if (sortConfig.key === 'created_at') {
+          const dateA = new Date(a[sortConfig.key]);
+          const dateB = new Date(b[sortConfig.key]);
+          if (sortConfig.direction === 'asc') {
+            return dateA - dateB;
+          }
+          return dateB - dateA;
+        }
+
         // Handle string comparison (case insensitive)
         if (typeof a[sortConfig.key] === 'string' && typeof b[sortConfig.key] === 'string') {
           const valueA = a[sortConfig.key].toLowerCase();
@@ -214,7 +234,7 @@ function EquipmentList() {
           }
           return 0;
         }
-        
+
         // Handle number comparison
         if (a[sortConfig.key] < b[sortConfig.key]) {
           return sortConfig.direction === 'asc' ? -1 : 1;
@@ -244,7 +264,7 @@ function EquipmentList() {
         </span>
       );
     }
-    
+
     return sortConfig.direction === 'asc' ? (
       <ChevronUp size={16} className="ml-1 inline-block text-blue-600" />
     ) : (
@@ -267,7 +287,7 @@ function EquipmentList() {
   const handleOperationSuccess = () => {
     fetchEquipment();
     setMessage({ text: 'ดำเนินการสำเร็จ', type: 'success' });
-    
+
     // Clear the message after 3 seconds
     setTimeout(() => {
       setMessage({ text: '', type: '' });
@@ -296,11 +316,16 @@ function EquipmentList() {
             </div>
             <div className="flex justify-between py-1 border-b border-gray-100">
               <span>วันที่ซื้อ:</span>
-              <span className="font-medium text-gray-700">{new Date(item.purchase_date).toLocaleDateString('th-TH')}</span>
+              <span className="font-medium text-gray-700">{new Date(item.purchase_date).toLocaleDateString('en-US')}</span>
             </div>
+
             <div className="flex justify-between py-1">
               <span>รายละเอียด:</span>
               <span className="font-medium text-gray-700">{item.details || '-'}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-gray-100">
+              <span>วันที่สร้าง:</span>
+              <span className="font-medium text-gray-700">{new Date(item.created_at).toLocaleDateString('en-US')}</span>
             </div>
           </div>
 
@@ -419,26 +444,53 @@ function EquipmentList() {
 
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <Calendar size={16} className="inline mr-1" /> วันที่เริ่มต้น
+                    <Calendar size={16} className="inline mr-1" /> วันที่เริ่มต้น (Purchase)
                   </label>
                   <input
                     type="date"
                     className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-                    value={dateRange.startDate}
-                    onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
+                    value={dateRange.purchaseStartDate}
+                    onChange={(e) => setDateRange({ ...dateRange, purchaseStartDate: e.target.value })}
                   />
                 </div>
 
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <Calendar size={16} className="inline mr-1" /> วันที่สิ้นสุด
+                    <Calendar size={16} className="inline mr-1" /> วันที่สิ้นสุด (Purchase)
                   </label>
                   <input
                     type="date"
                     className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-                    value={dateRange.endDate}
-                    onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
-                    min={dateRange.startDate}
+                    value={dateRange.purchaseEndDate}
+                    onChange={(e) => setDateRange({ ...dateRange, purchaseEndDate: e.target.value })}
+                    min={dateRange.purchaseStartDate}
+                  />
+                </div>
+
+
+
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <Calendar size={16} className="inline mr-1" />  วันที่เริ่มต้น (Created)
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+                    value={dateRange.createdStartDate}
+                    onChange={(e) => setDateRange({ ...dateRange, createdStartDate: e.target.value })}
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <Calendar size={16} className="inline mr-1" /> วันที่สิ้นสุด (Created)
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+                    value={dateRange.createdEndDate}
+                    onChange={(e) => setDateRange({ ...dateRange, createdEndDate: e.target.value })}
+                    min={dateRange.createdStartDate}
                   />
                 </div>
               </div>
@@ -451,8 +503,8 @@ function EquipmentList() {
         <button
           onClick={() => handleFilterChange('all')}
           className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${filtering === 'all'
-              ? 'bg-blue-100 text-blue-800 border border-blue-200'
-              : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+            : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
             }`}
         >
           ทั้งหมด
@@ -460,8 +512,8 @@ function EquipmentList() {
         <button
           onClick={() => handleFilterChange('Active')}
           className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${filtering === 'Active'
-              ? 'bg-green-100 text-green-800 border border-green-200'
-              : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+            ? 'bg-green-100 text-green-800 border border-green-200'
+            : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
             }`}
         >
           <span className="mr-1">●</span> Active
@@ -469,8 +521,8 @@ function EquipmentList() {
         <button
           onClick={() => handleFilterChange('In Repair')}
           className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${filtering === 'In Repair'
-              ? 'bg-amber-100 text-amber-800 border border-amber-200'
-              : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+            ? 'bg-amber-100 text-amber-800 border border-amber-200'
+            : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
             }`}
         >
           <span className="mr-1">◐</span> In Repair
@@ -478,8 +530,8 @@ function EquipmentList() {
         <button
           onClick={() => handleFilterChange('Inactive')}
           className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${filtering === 'Inactive'
-              ? 'bg-red-100 text-red-800 border border-red-200'
-              : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+            ? 'bg-red-100 text-red-800 border border-red-200'
+            : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
             }`}
         >
           <span className="mr-1">○</span> Inactive
@@ -487,8 +539,8 @@ function EquipmentList() {
         <button
           onClick={() => handleFilterChange('Disposed')}
           className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${filtering === 'Disposed'
-              ? 'bg-red-100 text-red-800 border border-red-200'
-              : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+            ? 'bg-red-100 text-red-800 border border-red-200'
+            : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
             }`}
         >
           <span className="mr-1">☒</span> Disposed
@@ -515,37 +567,44 @@ function EquipmentList() {
             <table className="min-w-full divide-y divide-gray-200 shadow-sm border-gray-200 border rounded-lg">
               <thead className="bg-gray-50">
                 <tr>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
                     onClick={() => requestSort('id')}
                   >
                     รหัส <SortIcon columnKey="id" />
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
                     onClick={() => requestSort('type')}
                   >
                     ประเภท <SortIcon columnKey="type" />
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
                     onClick={() => requestSort('name')}
                   >
                     ชื่ออุปกรณ์ <SortIcon columnKey="name" />
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
                     onClick={() => requestSort('purchase_date')}
                   >
                     วันที่ซื้อ <SortIcon columnKey="purchase_date" />
                   </th>
-                  <th 
+
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
                     onClick={() => requestSort('status')}
                   >
                     สถานะ <SortIcon columnKey="status" />
                   </th>
-                  <th 
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
+                    onClick={() => requestSort('created_at')}
+                  >
+                    วันที่สร้าง <SortIcon columnKey="created_at" />
+                  </th>
+                  <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
                     onClick={() => requestSort('details')}
                   >
@@ -569,12 +628,24 @@ function EquipmentList() {
                       {item.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {new Date(item.purchase_date).toLocaleDateString('th-TH')}
+                    {new Date(item.purchase_date).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })}
                     </td>
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-3 py-1 text-xs leading-5 font-semibold rounded-full border ${getStatusColor(item.status)}`}>
                         <span className="mr-1">{getStatusIcon(item.status)}</span> {item.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {new Date(item.created_at).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                       {item.details || '-'}
@@ -597,7 +668,7 @@ function EquipmentList() {
 
       {/* Modals */}
       {isAddModalOpen && (
-        <AddEquipmentModal 
+        <AddEquipmentModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onSuccess={handleOperationSuccess}
