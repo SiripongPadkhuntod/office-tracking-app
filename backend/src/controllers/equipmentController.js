@@ -29,7 +29,7 @@ export const searchEquipment = async (req, res) => {
     try {
         const { type, startDate, endDate, searchType, searchTerm, createdStartDate, createdEndDate } = req.query;
         console.log("req.query", req.query);
-        let query = "SELECT * FROM equipment WHERE 1";
+        let query = "SELECT * FROM equipment WHERE active = 1";
         const params = [];
 
         if (type) {

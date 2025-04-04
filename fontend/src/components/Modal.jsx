@@ -78,6 +78,7 @@ function Modal({ isOpen, onClose, title, children, size = 'md' }) {
           {children}
         </div>
       </div>
+      
     </div>
   );
 }

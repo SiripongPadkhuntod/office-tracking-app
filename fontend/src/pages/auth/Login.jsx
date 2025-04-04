@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
+import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import AlertMessage from '../../components/AlertMessage';
 import Loading from '../../components/Loading';
-
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -12,46 +11,40 @@ function Login() {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState('error');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const { login, loading } = useAuth();
   const navigate = useNavigate();
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setAlertMessage('');
 
+    if (!email || !password) {
+      setAlertType('error');
+      setAlertMessage('กรุณากรอกอีเมลและรหัสผ่าน');
+      return;
+    }
+
     try {
-      const response = await login(email, password , e);
-      // console.log('Login response:', response);
+      const response = await login(email, password, rememberMe);
     
-      if (response.success == true) {
-        // แสดงข้อความแจ้งเตือนว่าเข้าสู่ระบบสำเร็จ
-        // setAlertType('success');
-        // setAlertMessage('เข้าสู่ระบบสำเร็จ');
-      
-        // นำทางไปยังหน้า equipment หลังจาก delay สั้นๆ
-          navigate('/equipment');
-      }
-      else {
-        // setAlertType('error');
-        // setAlertMessage(response.message || 'เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบข้อมูล');
-        if(response.message == "Can't add new command when connection is in closed state") {
-          alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณ และลองอีกครั้ง');
-          return;
+      if (response.success === true) {
+        // แสดง toast แจ้งเตือนสำเร็จก่อนนำทาง (ถ้ามี toast component)
+        // toast.success('เข้าสู่ระบบสำเร็จ');
+        navigate('/equipment');
+      } else {
+        if (response.message === "Can't add new command when connection is in closed state") {
+          setAlertType('error');
+          setAlertMessage('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณ และลองอีกครั้ง');
+        } else {
+          setAlertType('error');
+          setAlertMessage(response.message || 'เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบข้อมูล');
         }
-        else{
-          alert(response.message );
-        }
-        
-      //   setTimeout(() => {
-      //     setAlertMessage(''); // ล้างข้อความแจ้งเตือนหลังจาก 3 วินาที
-      // }, 3000);
       }
     } catch (error) {
       if (!error.response) {
-        // setAlertType('error');
-        // setAlertMessage('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
-        alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณ และลองอีกครั้ง');
+        setAlertType('error');
+        setAlertMessage('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณ และลองอีกครั้ง');
         return;
       }
       setAlertType('error');
@@ -64,14 +57,16 @@ function Login() {
   };
 
   const forgotPassword = () => {
-    alert('กรุณาติดต่อผู้ดูแลระบบเพื่อรีเซ็ตรหัสผ่านของคุณ');
+    // แสดง dialog หรือ modal แทนการใช้ alert
+    setAlertType('info');
+    setAlertMessage('กรุณาติดต่อผู้ดูแลระบบเพื่อรีเซ็ตรหัสผ่านของคุณ');
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 py-12 px-4 transition-all duration-300">
+      <div className="max-w-md w-full space-y-6 bg-white p-8 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300">
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-blue-100">
+          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-blue-100 hover:bg-blue-200 transition-colors duration-300">
             <LogIn size={32} className="text-blue-600" />
           </div>
           <h2 className="mt-4 text-center text-3xl font-bold text-gray-900">
@@ -86,9 +81,7 @@ function Login() {
           <AlertMessage message={alertMessage} type={alertType} />
         )}
 
-       
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -96,7 +89,7 @@ function Login() {
               </label>
               <div className="relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail size={18} className="text-gray-400" />
+                  <Mail size={18} className="text-blue-500" />
                 </div>
                 <input
                   id="email"
@@ -104,7 +97,7 @@ function Login() {
                   type="email"
                   autoComplete="email"
                   required
-                  className="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out sm:text-sm"
                   placeholder="your.email@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -118,7 +111,7 @@ function Login() {
               </label>
               <div className="relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock size={18} className="text-gray-400" />
+                  <Lock size={18} className="text-blue-500" />
                 </div>
                 <input
                   id="password"
@@ -126,7 +119,7 @@ function Login() {
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
-                  className="appearance-none block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ease-in-out sm:text-sm"
                   placeholder="รหัสผ่านของคุณ"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -135,12 +128,12 @@ function Login() {
                   <button
                     type="button"
                     onClick={togglePasswordVisibility}
-                    className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors duration-200"
                   >
                     {showPassword ? (
-                      <span className="text-xs font-medium">ซ่อน</span>
+                      <EyeOff size={18} className="text-blue-500" />
                     ) : (
-                      <span className="text-xs font-medium">แสดง</span>
+                      <Eye size={18} />
                     )}
                   </button>
                 </div>
@@ -154,6 +147,8 @@ function Login() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
@@ -162,13 +157,10 @@ function Login() {
             </div>
 
             <div className="text-sm">
-              {/* <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
-                ลืมรหัสผ่าน?
-              </Link> */}
               <button
                 type="button"
                 onClick={forgotPassword}
-                className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
+                className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none transition-colors duration-200"
               >
                 ลืมรหัสผ่าน?
               </button>
@@ -179,7 +171,7 @@ function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm transition duration-150 ease-in-out"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg hover:shadow-blue-200 transition-all duration-300 ease-in-out"
             >
               {loading ? (
                 <Loading />
@@ -195,7 +187,7 @@ function Login() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               ยังไม่มีบัญชี?{' '}
-              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 transition duration-150 ease-in-out">
+              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 underline-offset-2 hover:underline transition duration-200 ease-in-out">
                 ลงทะเบียนใหม่
               </Link>
             </p>

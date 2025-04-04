@@ -642,8 +642,7 @@ function EquipmentList() {
           <AlertCircle size={48} className="text-gray-400 mb-4" />
           <p className="text-gray-500 text-lg">ไม่พบข้อมูลอุปกรณ์</p>
           <p className="text-gray-500 text-sm">กรุณาลองค้นหาหรือเพิ่มอุปกรณ์ใหม่</p>
-          <p className="text-gray-500 text-lg">ไม่พบข้อมูลอุปกรณ์</p>
-          <p className="text-gray-400 text-sm mt-2">ลองเปลี่ยนตัวเลือกในการค้นหาหรือตัวกรอง</p>
+
 </div>
       ) : (
         <>
