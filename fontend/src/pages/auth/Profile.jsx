@@ -32,7 +32,7 @@ function Profile() {
     setMessage({ text: 'ฟีเจอร์นี้ยังไม่พร้อมใช้งาน', type: 'info' });
     setTimeout(() => {
       setMessage({ text: '', type: '' });
-    }, 3000);
+    }, 1500);
     
   }
 
