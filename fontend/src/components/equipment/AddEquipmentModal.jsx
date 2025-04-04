@@ -158,6 +158,7 @@ function AddEquipmentModal({ isOpen, onClose, onSuccess }) {
             <option value="Active">Active</option>
             <option value="In Repair">In Repair</option>
             <option value="Inactive">Inactive</option>
+            <option value="Inactive">Disposed</option>
           </select>
         </div>
         
