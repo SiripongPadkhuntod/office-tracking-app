@@ -1,6 +1,4 @@
-// vite.config.js
 import { defineConfig } from 'vite'
-// import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
@@ -13,5 +11,6 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    historyApiFallback: true, // ✅ เพิ่มเพื่อให้รองรับ React Router
   },
 })
