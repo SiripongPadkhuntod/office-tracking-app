@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from "@vercel/speed-insights/react"; 
 
 // Pages
 import Login from './pages/auth/Login';
@@ -45,6 +46,7 @@ function App() {
         </Routes>
       </AuthProvider>
       <Analytics />
+      <SpeedInsights />
     </Router>
   );
 }
