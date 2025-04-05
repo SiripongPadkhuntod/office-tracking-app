@@ -71,18 +71,20 @@ export const searchEquipment = async (req, res) => {
         
         // Handle created_at date filtering
         if (createdStartDate && createdEndDate) {
-
             query += " AND created_at BETWEEN ? AND ?";
-            params.push(createdStartDate, createdEndDate);
+            params.push(`${createdStartDate} 00:00:00`, `${createdEndDate} 23:59:59`);
         } else if (createdStartDate) {
             query += " AND created_at >= ?";
-            params.push(createdStartDate);
+            params.push(`${createdStartDate} 00:00:00`);
         } else if (createdEndDate) {
             query += " AND created_at <= ?";
-            params.push(createdEndDate);
+            params.push(`${createdEndDate} 23:59:59`);
         }
+        
 ;
 
+        console.log("query", query);
+        console.log("params", params);
         const [rows] = await db.execute(query, params);
         res.status(200).json({ status: 200, length: rows.length, data: rows });
     } catch (error) {

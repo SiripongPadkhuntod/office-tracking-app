@@ -79,7 +79,7 @@ function EquipmentList() {
   const handleSearch = async (e) => {
     e.preventDefault();
 
-    if (!searchTerm.trim() && !typeFilter && !dateRange.purchaseStartDate && !dateRange.purchaseEndDate) {
+    if (!searchTerm.trim() && !typeFilter && !dateRange.purchaseStartDate && !dateRange.purchaseEndDate && !dateRange.createdStartDate && !dateRange.createdEndDate) {
       return fetchEquipment();
     }
 
@@ -471,7 +471,7 @@ function EquipmentList() {
                   </select>
                   <input
                     type="text"
-                    placeholder={`ค้นหาตาม${searchType === 'name' ? 'ชื่อ' : 'รหัส'}...`}
+                    placeholder={`ค้นหาตาม${searchType === 'name' ? 'ชื่อ ' : 'รหัส  xxxxx  or  xxxxx-xxxxxx'} ...`}
                     className="w-full px-4 py-2 border border-gray-300 rounded-r-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -691,6 +691,16 @@ function EquipmentList() {
                       สถานะ <SortIcon columnKey="status" />
                     </span>
                   </th>
+
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer group"
+                    onClick={() => requestSort('created_at')}
+                  >
+                    <span className="flex items-center">
+                      วันที่สร้าง <SortIcon columnKey="created_at" />
+                    </span>
+                  </th>
+
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     จัดการ
                   </th>
@@ -709,7 +719,7 @@ function EquipmentList() {
                       {item.type}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(item.purchase_date).toLocaleDateString('th-TH', {
+                      {new Date(item.purchase_date).toLocaleDateString('en-US', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -719,6 +729,13 @@ function EquipmentList() {
                       <span className={`px-3 py-1 text-xs leading-5 font-semibold rounded-full border ${getStatusColor(item.status)}`}>
                         <span className="mr-1">{getStatusIcon(item.status)}</span> {item.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(item.created_at).toLocaleDateString('en-US', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button

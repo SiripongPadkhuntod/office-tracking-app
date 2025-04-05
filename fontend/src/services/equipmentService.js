@@ -15,7 +15,8 @@ const equipmentService = {
   // Search equipment
   searchEquipment: (query) => {
     const params = new URLSearchParams();
-    console.log("query", query);
+
+    // console.log("query", query);
 
     if (query.searchType) params.append("searchType", query.searchType);
     if (query.searchTerm) params.append("searchTerm", query.searchTerm);
@@ -38,7 +39,7 @@ const equipmentService = {
 
     // if(query.cre)
 
-    console.log(`/equipment/search?${params.toString()}`);
+    // console.log(`/equipment/search?${params.toString()}`);
     return api.get(`/equipment/search?${params.toString()}`);
   },
 
