@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -12,6 +12,7 @@ function Login() {
   const [alertType, setAlertType] = useState('error');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const { login, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -29,9 +30,13 @@ function Login() {
       const response = await login(email, password, rememberMe);
     
       if (response.success === true) {
-        // แสดง toast แจ้งเตือนสำเร็จก่อนนำทาง (ถ้ามี toast component)
-        // toast.success('เข้าสู่ระบบสำเร็จ');
-        navigate('/equipment');
+        // แสดง skeleton loading ก่อนนำทาง
+        setIsRedirecting(true);
+        
+        // หน่วงเวลาเล็กน้อยเพื่อให้ loading skeleton แสดงก่อนนำทาง
+        setTimeout(() => {
+          navigate('/equipment');
+        }, 1000);
       } else {
         if (response.message === "Can't add new command when connection is in closed state") {
           setAlertType('error');
@@ -57,14 +62,17 @@ function Login() {
   };
 
   const forgotPassword = () => {
-    // แสดง dialog หรือ modal แทนการใช้ alert
     setAlertType('info');
     setAlertMessage('กรุณาติดต่อผู้ดูแลระบบเพื่อรีเซ็ตรหัสผ่านของคุณ');
 
     setTimeout(() => {
       setAlertMessage('');
-    }
-    , 3000);
+    }, 3000);
+  }
+
+  // แสดง Loading Skeleton Component
+  if (isRedirecting) {
+    return <LoadingSkeleton />;
   }
 
   return (
@@ -198,6 +206,48 @@ function Login() {
             </p>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// Component สำหรับ Loading Skeleton
+function LoadingSkeleton() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 py-12 px-4">
+      <div className="flex items-center justify-center mb-6">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
+      <h2 className="text-2xl font-bold text-gray-800 mb-2">กำลังเข้าสู่ระบบ</h2>
+      <p className="text-gray-600">กำลังเตรียมข้อมูลอุปกรณ์ของคุณ...</p>
+      
+      {/* Skeleton สำหรับหน้า Equipment */}
+      <div className="w-full max-w-4xl mt-8 bg-white rounded-xl shadow-lg overflow-hidden p-4">
+        <div className="flex justify-between items-center mb-6">
+          <div className="h-10 bg-gray-200 rounded w-48 animate-pulse"></div>
+          <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="h-24 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-24 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-24 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        
+        <div className="h-8 bg-gray-200 rounded w-64 mb-4 animate-pulse"></div>
+        
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center p-3 border border-gray-100 rounded-lg">
+              <div className="h-12 w-12 rounded-full bg-gray-200 animate-pulse"></div>
+              <div className="ml-4 flex-1">
+                <div className="h-5 bg-gray-200 rounded w-full max-w-md mb-2 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse"></div>
+              </div>
+              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
